@@ -2,48 +2,37 @@ import numpy as np
 import math
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
-from mlxtend.plotting import plot_decision_regions
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
 class perceptron(object):
 
-    def __init__(self, learningRate=0.025, iters=5):
+    def __init__(self, learningRate=0.000025, iters=50):
         self.learningRate=learningRate
         self.iters = iters
         self.theta1=[]
         self.theta2=[]
         self.theta3 = []
 
-
-    def predict(self, xi):
-        print('self.wb[1:]', self.wb[1:],'xi', xi)
-        wxPlusBias= np.dot(self.wb[1:], xi) + self.wb[0]
-        return np.where(wxPlusBias <= 0.0, -1 ,1)
-
-
     def fit(self, X, y):
-        #print(X.shape[1])
-        self.wb = np.zeros(1+ X.shape[1])
-        self.errors = []
+        # X = m * n: m is num of item, n is num of dimension
+        self.wb = 0.2 * np.random.rand(1 + X.shape[1]) - 0.1
         for i in range(self.iters):
-            errors = 0
-            print( i ,"th iteration: ")
-            for xi, yi in zip(X,y): #对每个训练样本
-                update = self.learningRate * (yi - self.predict(xi))
-                #如果update不为0，则下列式子不为0，进行更新。权重变化为正常的2倍。
-                self.wb[1: ] += update * xi
-                self.wb[0] += update
-                errors += int(update != 0.0)#误分类样本数
+            print(i, "th iteration: ")
+            a = np.dot(self.wb[1:], X.T)+self.wb[0] #a=wx+b
+            lost = - np.sum(y * a)
+            predict = np.where(a <= 0.0, -1, 1)
+            acc = np.sum(y == predict) / y.shape[0]
+            update = self.learningRate * (y - a)
+            self.wb[1:] += np.sum(update * X.T, axis=1)
+            self.wb[0] += np.sum(update)
+
 
             self.theta1.append(self.wb[1])
             self.theta2.append(self.wb[2])
 
-            if errors == 0: #如果没有误分类，训练终止
-                print('accuracy =1. return')
-                return self
-
-            print('accuracy: ', (1 - errors / 100))
+            print('lost ', lost)
+            print('accuracy', acc)
         return self
 
 def plotDataSet( dataset):
@@ -61,18 +50,17 @@ def main():
         iris = load_iris()
         print('data attributes: ', dir(iris))
         print('data description：　', iris.DESCR )
-
+        '''
         X_all = iris.data[:]
         plotDataSet(X_all)
         #画图可以看出第二种和第三种iris线性不可分，以下只采用前两种iris的数据
-
+        '''
         X = iris.data[:100]
-
         y = iris.target[:100]
         y = np.where(y == 1, 1, -1)
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-        ppn = perceptron(learningRate=0.025, iters=5)
+        ppn = perceptron(learningRate=0.000025, iters=50)
         result = ppn.fit(X_train, y_train)
         print('train done')
         #print("result:\n theta1: " +str(result.theta1))
